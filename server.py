@@ -14,15 +14,6 @@ max_clients = 10
 # socket, print out
 # else: too many (more than 10), don't connect them
 def handle_client(client_socket, addr):
-    username = client_socket.recv(1024).decode()
-    if len(client_list) < max_clients:
-        client_list[username] = client_socket
-        print(f"Connected with {addr}")
-        print(f"{username} Joined the Chatroom")
-    else:
-        print("Too Many Users")
-        client_socket.close()
-        return
     
     while True:
         try:
@@ -34,17 +25,33 @@ def handle_client(client_socket, addr):
             parts = message.split(' ', 1)
             #parts[0] should have the command...
             command = parts[0]
+            username = parts[1] if len(parts) > 1 else None
 
-            if command == 'LIST':
+#Start of JOIN command stuff
+            if command == "JOIN":
+                if len(client_list) >= max_clients:
+                    print("Too Many Users")
+                    client_socket.send( "Too Many Users".encode())
+                    client_socket.close()
+                    break
+                if username in client_list:
+                    client_socket.send("Already Registered".encode())
+                    client_socket.close()
+                    break
+
+                client_list[username] = client_socket
+                print(f"{username} Joined the Chatroom")
+#End of JOIN command stuff
+
+#Start of LIST command stuff
+            elif command == 'LIST':
                 if username in client_list:
                     client_socket.send('\n'.join(client_list.keys()).encode())
                 else:
                     client_socket.send(b"Not Registered?")
+#End of LIST command stuff
 
-#TODO: make command stuff for BCST and QUIT
-
-
-
+#Start of MESG command stuff
             elif command == "MESG":
                 if username in client_list:
                     recipient, msg = parts[1].split(' ', 1)
@@ -55,7 +62,42 @@ def handle_client(client_socket, addr):
                         client_socket.send(b"Unknown Recipient")
                 else:
                     client_socket.send(b"Unregistered User")
+#End of MESG command stuff
 
+#Start of BCST command stuff
+            elif command == "BCST":
+                if username not in client_list:
+                    client_socket.send(b"You are not registered!")
+                    continue
+                #check if the message len is good, if not there isn't a message to send...
+                if len(parts) < 2:
+                    client_socket.send("Usage: BCST <some_message_text")
+                    continue
+            
+                bcmsg = parts[1]
+                #For this if the recipient is in the list, send message, if it is the sender
+                #Send a "username is sending a broadcast"?
+                for recipient, recipient_socket in client_list.items():
+                    if recipient == username:
+                        recipient_socket.send(f"{username} is sending a broadcast")
+                        recipient_socket.send(f"{username}: {bcmsg}".encode)
+                    elif recipient != username:
+                        recipient_socket.send(f"{username}: {bcmsg}".encode)
+#End of BCST command stuff
+
+#Start of QUIT command stuff 
+            #The QUIT command, should find the client in list, delete that data
+            #Then send to client that they are disconnected
+            #TODO: find a way to send a "username" left message to every user NOT the one leaving
+            elif command == "QUIT":
+                if username in client_list:
+                    del client_list[username]
+                    client_socket.send(f"{username} is quitting the chat server")
+                    break
+
+#End of QUIT command stuff
+
+#If we end up in the else statement, its a unknown command
             else:
                 #If reach here unknown message, throw out
                 client_socket.send(b"Unknown Message")
