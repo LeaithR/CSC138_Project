@@ -77,7 +77,7 @@ def create_server(port):
   
 
 def main():
-    if(sys.argv) != 2:
+    if len(sys.argv) != 2:
         print("Usage: python server.py <port>")
         sys.exit(1)
     
