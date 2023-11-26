@@ -41,16 +41,18 @@ def handle_client(client_socket, addr):
                 else:
                     client_socket.send(b"Not Registered?")
 
-#TODO: make command stuff for BCST and QUIT
-
-            
-            elif command == "QUIT":
-                if username in client_list:
-                    client_socket.send(f"{username} is quiting the chat server".encode())
-                    print(username + " left")
-                    client_list.remove(username)
-
-
+#DO: make command stuff for BCST
+            elif command == "BCST":
+                message = ' '.join(message)
+                #broadcast the message to all command clients
+                for username in client_list:
+                    if username != client_list:
+                        try:
+                            client_socket.send(message.encode())
+                        except:
+                            #remove any clients disconnected to server
+                            client_socket.send(b"Unregistered User(s) found")
+                            client_list.remove(username)
 
             elif command == "MESG":
                 if username in client_list:
@@ -62,7 +64,12 @@ def handle_client(client_socket, addr):
                         client_socket.send(b"Unknown Recipient")
                 else:
                     client_socket.send(b"Unregistered User")
-
+                    
+#DO: make command stuff for QUIT
+            elif command == "QUIT":
+                response = "Disconnecting from server"
+                break #break out of the loop to disconnect the client
+            
             else:
                 #If reach here unknown message, throw out
                 client_socket.send(b"Unknown Message")
@@ -70,6 +77,10 @@ def handle_client(client_socket, addr):
         except Exception as e:
             print("Error:", e)
             break
+        #disconnects client from service and also removed from database
+        print("Connection from {address} is now closed.")
+        client_list.remove(client_socket)
+        client_socket.close()
 
 
 def create_server(port):
