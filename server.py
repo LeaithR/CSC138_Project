@@ -43,6 +43,13 @@ def handle_client(client_socket, addr):
 
 #TODO: make command stuff for BCST and QUIT
 
+            
+            elif command == "QUIT":
+                if username in client_list:
+                    client_socket.send(f"{username} is quiting the chat server".encode())
+                    print(username + " left")
+                    client_list.remove(username)
+
 
 
             elif command == "MESG":
