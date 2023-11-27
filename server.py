@@ -42,14 +42,14 @@ def handle_client(client_socket, addr):
                     client_socket.send('\n'.join(client_list.keys()).encode())
                 else:
                     client_socket.send(b"Not Registered?")
-
+                    
             #QUIT command
             elif command == "QUIT":
                 if username in client_list:
                     client_socket.send(f"{username} is quiting the chat server".encode())
                     print(username + " left")
                     client_list.remove(username)
-
+                    
             #MESSAGE command
             elif command == "MESG":
                 if username in client_list:
