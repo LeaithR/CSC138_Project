@@ -39,7 +39,8 @@ def handle_client(client_socket, addr):
             #LIST command
             if command == 'LIST':
                 if username in client_list:
-                    client_socket.send('\n'.join(client_list.keys()).encode())
+                    user_list = ', '.join(client_list.keys())
+                    client_socket.send(user_list.encode())
                 else:
                     client_socket.send(b"Not Registered?")
                     
