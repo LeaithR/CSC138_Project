@@ -1,9 +1,18 @@
-# client code CSC 138 Project
 import socket
 import threading
 
+def receive_messages(client_socket):
+    while True:
+        data = client_socket.recv(1024).decode()
+        if not data:
+            break
+        print(data)
+
 # function to handle user input in a separate thread
 def handle_user_input(client_socket, username):
+    receive_thread = threading.Thread(target=receive_messages, args=(client_socket,))
+    receive_thread.start()
+
     while True:
         # Get user input
         user_input = input(f"{username}: ")
@@ -15,40 +24,28 @@ def handle_user_input(client_socket, username):
         if user_input.lower().strip() == 'bye':
             break
 
-    # Close the client socket after the 'bye' command is received        
     client_socket.close()
- 
+
 def clientFunc():
-    # port number and address
+    # port number and addres
     portNum = 8002
     clientHostName = socket.gethostbyname(socket.gethostname())
- 
-     # create socket
+    
+    # create socket
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  
-     # 
-    print("To exit program type bye on client end")
+
+    print("To exit program type bye on the client end")
     print("Enter Username:")
     userName = input()
-    print(str(userName) + " has connected to server")
-  
-     # connect to server
+    print(f"{userName} has connected to server")
+
+    # connect to server
     client.connect((clientHostName, portNum))
 
-    user_input_thread = threading.Thread(target=handle_user_input, args=(client, userName))
-    user_input_thread.start()
+    # Send the username immediately after connecting
+    client.send(userName.encode())
 
-    message = input(str(userName) + ": ")
-  
-    # receive and display messages from the server
-    while True:
-        data = client.recv(1024).decode()
-        if not data:
-            break
-        print(data)
-  
-    client.close()
-  
-  
+    handle_user_input(client, userName)
+
 if __name__ == '__main__':
-      clientFunc()
+    clientFunc()
