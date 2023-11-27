@@ -35,33 +35,45 @@ def handle_client(client_socket, addr):
             #parts[0] should have the command...
             command = parts[0]
 
+
+            #LIST command
             if command == 'LIST':
                 if username in client_list:
                     client_socket.send('\n'.join(client_list.keys()).encode())
                 else:
                     client_socket.send(b"Not Registered?")
-
-#TODO: make command stuff for BCST and QUIT
-
-            
+                    
+            #QUIT command
             elif command == "QUIT":
                 if username in client_list:
                     client_socket.send(f"{username} is quiting the chat server".encode())
                     print(username + " left")
                     client_list.remove(username)
-
-
-
+                    
+            #MESSAGE command
             elif command == "MESG":
                 if username in client_list:
                     recipient, msg = parts[1].split(' ', 1)
                     if recipient in client_list:
                         recipient_socket = client_list[recipient]
-                        recipient_socket.send(f"Nessage from {username}: {msg}".encode())
+                        recipient_socket.send(f"Message from {username}: {msg}".encode())
                     else:
                         client_socket.send(b"Unknown Recipient")
                 else:
                     client_socket.send(b"Unregistered User")
+
+            #BROADCAST command
+            elif command == "BCST":
+                message = ' '.join(parts[1:])
+                # broadcast the message to all connected clients
+                for client_username, client_socket in client_list.items():
+                    if client_socket != client_list[username]:
+                        try:
+                            client_socket.send(f"Broadcast from {username}: {message}".encode())
+                        except Exception as e:
+                            # remove any clients disconnected from the server
+                            print(f"Error sending broadcast to {client_username}: {e}")
+                            del client_list[client_username]
 
             else:
                 #If reach here unknown message, throw out
